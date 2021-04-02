@@ -48,7 +48,7 @@ class NetwalkGraphics {
   final double pipeWidth, cutWidth, lockWidth, atlasSize;
 
   // Primitive paths used to build up everything else.
-  PathSet? _straightSeg, _arcSeg, _arcCutSeg;
+  late PathSet _straightSeg, _arcSeg, _arcCutSeg;
   Map<NetwalkPiece, PathSet?> _pieces = Map();
 
   NetwalkGraphics(
@@ -85,29 +85,29 @@ class NetwalkGraphics {
         _computeArcPath(0, atlasSize, cutWidth),
         _computeArcPath(0, atlasSize, lockWidth));
     _arcCutSeg = PathSet(
-        Path.combine(PathOperation.difference, _arcSeg!.paths[0],
-            _arcSeg!.paths[1].transform(Matrix4.rotationZ(-pi / 2).storage)),
-        _arcSeg!.paths[1],
-        _arcSeg!.paths[2]);
+        Path.combine(PathOperation.difference, _arcSeg.paths[0],
+            _arcSeg.paths[1].transform(Matrix4.rotationZ(-pi / 2).storage)),
+        _arcSeg.paths[1],
+        _arcSeg.paths[2]);
 
     _pieces[NetwalkPiece.straightSinglePiece] = _straightSeg;
     _pieces[NetwalkPiece.straightDoubleAnglePiece] = PathSet.combine(
-        PathOperation.union, _straightSeg!, _straightSeg!.rotate(pi / 2));
+        PathOperation.union, _straightSeg, _straightSeg.rotate(pi / 2));
     _pieces[NetwalkPiece.straightDoubleAcrossPiece] = PathSet.combine(
-        PathOperation.union, _straightSeg!, _straightSeg!.rotate(pi));
+        PathOperation.union, _straightSeg, _straightSeg.rotate(pi));
     _pieces[NetwalkPiece.straightTriplePiece] = PathSet.combine(
         PathOperation.union,
         _pieces[NetwalkPiece.straightDoubleAcrossPiece]!,
-        _straightSeg!.rotate(pi / 2));
+        _straightSeg.rotate(pi / 2));
     _pieces[NetwalkPiece.straightQuadPiece] = PathSet.combine(
         PathOperation.union,
         _pieces[NetwalkPiece.straightTriplePiece]!,
-        _straightSeg!.rotate(-pi / 2));
+        _straightSeg.rotate(-pi / 2));
     _pieces[NetwalkPiece.arcDoubleAnglePiece] = _arcSeg;
     _pieces[NetwalkPiece.arcTriplePiece] = PathSet.combine(
-        PathOperation.union, _arcSeg!, _arcCutSeg!.rotate(pi / 2));
+        PathOperation.union, _arcSeg, _arcCutSeg.rotate(pi / 2));
     PathSet halfQuad = PathSet.combine(
-        PathOperation.union, _arcCutSeg!, _arcCutSeg!.rotate(pi / 2));
+        PathOperation.union, _arcCutSeg, _arcCutSeg.rotate(pi / 2));
     _pieces[NetwalkPiece.arcQuadPiece] =
         PathSet.combine(PathOperation.union, halfQuad, halfQuad.rotate(pi));
   }
