@@ -25,8 +25,8 @@ class Root extends StatelessWidget {
 class GameView extends StatefulWidget {
   NetwalkState gameState = NetwalkState();
 
-  GameView({Key key, this.title}) : super(key: key);
-  final String title;
+  GameView({Key? key, this.title}) : super(key: key);
+  final String? title;
 
   @override
   _GameViewState createState() => _GameViewState();
@@ -72,7 +72,7 @@ class _GameViewState extends State<GameView>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title!),
       ),
       body: Container(
         child: LayoutBuilder(

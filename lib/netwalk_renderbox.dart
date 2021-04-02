@@ -6,7 +6,7 @@ import 'netwalk_graphics.dart';
 
 // Renders the Netwalk game board.
 class NetwalkRenderBox extends RenderBox {
-  Ticker _ticker;
+  late Ticker _ticker;
   Duration _previousTime = Duration.zero;
   NetwalkGraphics gfx = NetwalkGraphics(10, 16, 22, 100);
 

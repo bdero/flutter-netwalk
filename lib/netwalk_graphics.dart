@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 // simultaneously. This is useful for keeping track of paths used for outline
 // drawing whilst the base shapes are being built up from primitives.
 class PathSet {
-  List<Path> paths;
-  Path lockPath;
+  late List<Path> paths;
+  late Path lockPath;
 
   PathSet(Path weight1, Path weight2, Path weight3) {
     paths = new List.from({weight1, weight2, weight3}, growable: false);
@@ -48,8 +48,8 @@ class NetwalkGraphics {
   final double pipeWidth, cutWidth, lockWidth, atlasSize;
 
   // Primitive paths used to build up everything else.
-  PathSet _straightSeg, _arcSeg, _arcCutSeg;
-  Map<NetwalkPiece, PathSet> _pieces = Map();
+  PathSet? _straightSeg, _arcSeg, _arcCutSeg;
+  Map<NetwalkPiece, PathSet?> _pieces = Map();
 
   NetwalkGraphics(
       this.pipeWidth, this.cutWidth, this.lockWidth, this.atlasSize) {
@@ -62,14 +62,14 @@ class NetwalkGraphics {
     canvas.save();
     canvas.translate(atlasSize / 2, atlasSize / 2);
     NetwalkPiece.values.forEach((v) {
-      canvas.drawPath(_pieces[v].paths[0], paint);
+      canvas.drawPath(_pieces[v]!.paths[0], paint);
       canvas.translate(atlasSize, 0);
     });
     canvas.restore();
     canvas.save();
     canvas.translate(atlasSize / 2, atlasSize*1.5);
     NetwalkPiece.values.forEach((v) {
-      canvas.drawPath(_pieces[v].lockPath, paint);
+      canvas.drawPath(_pieces[v]!.lockPath, paint);
       canvas.translate(atlasSize, 0);
     });
     canvas.restore();
@@ -85,29 +85,29 @@ class NetwalkGraphics {
         _computeArcPath(0, atlasSize, cutWidth),
         _computeArcPath(0, atlasSize, lockWidth));
     _arcCutSeg = PathSet(
-        Path.combine(PathOperation.difference, _arcSeg.paths[0],
-            _arcSeg.paths[1].transform(Matrix4.rotationZ(-pi / 2).storage)),
-        _arcSeg.paths[1],
-        _arcSeg.paths[2]);
+        Path.combine(PathOperation.difference, _arcSeg!.paths[0],
+            _arcSeg!.paths[1].transform(Matrix4.rotationZ(-pi / 2).storage)),
+        _arcSeg!.paths[1],
+        _arcSeg!.paths[2]);
 
     _pieces[NetwalkPiece.straightSinglePiece] = _straightSeg;
     _pieces[NetwalkPiece.straightDoubleAnglePiece] = PathSet.combine(
-        PathOperation.union, _straightSeg, _straightSeg.rotate(pi / 2));
+        PathOperation.union, _straightSeg!, _straightSeg!.rotate(pi / 2));
     _pieces[NetwalkPiece.straightDoubleAcrossPiece] = PathSet.combine(
-        PathOperation.union, _straightSeg, _straightSeg.rotate(pi));
+        PathOperation.union, _straightSeg!, _straightSeg!.rotate(pi));
     _pieces[NetwalkPiece.straightTriplePiece] = PathSet.combine(
         PathOperation.union,
-        _pieces[NetwalkPiece.straightDoubleAcrossPiece],
-        _straightSeg.rotate(pi / 2));
+        _pieces[NetwalkPiece.straightDoubleAcrossPiece]!,
+        _straightSeg!.rotate(pi / 2));
     _pieces[NetwalkPiece.straightQuadPiece] = PathSet.combine(
         PathOperation.union,
-        _pieces[NetwalkPiece.straightTriplePiece],
-        _straightSeg.rotate(-pi / 2));
+        _pieces[NetwalkPiece.straightTriplePiece]!,
+        _straightSeg!.rotate(-pi / 2));
     _pieces[NetwalkPiece.arcDoubleAnglePiece] = _arcSeg;
     _pieces[NetwalkPiece.arcTriplePiece] = PathSet.combine(
-        PathOperation.union, _arcSeg, _arcCutSeg.rotate(pi / 2));
+        PathOperation.union, _arcSeg!, _arcCutSeg!.rotate(pi / 2));
     PathSet halfQuad = PathSet.combine(
-        PathOperation.union, _arcCutSeg, _arcCutSeg.rotate(pi / 2));
+        PathOperation.union, _arcCutSeg!, _arcCutSeg!.rotate(pi / 2));
     _pieces[NetwalkPiece.arcQuadPiece] =
         PathSet.combine(PathOperation.union, halfQuad, halfQuad.rotate(pi));
   }
