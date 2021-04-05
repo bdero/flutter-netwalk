@@ -2,7 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import 'netwalk_state.dart';
+import 'netwalk_input.dart';
 import 'netwalk_renderbox.dart';
 
 void main() {
@@ -23,7 +23,7 @@ class Root extends StatelessWidget {
 }
 
 class GameView extends StatefulWidget {
-  NetwalkState gameState = NetwalkState();
+  NetwalkInput gameInput = NetwalkInput();
 
   GameView({Key? key, this.title}) : super(key: key);
   final String? title;
@@ -36,38 +36,39 @@ class _GameViewState extends State<GameView>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    Widget gameWidget = _NetwalkWidget(widget.gameState);
+    Widget gameWidget = _NetwalkWidget(widget.gameInput);
 
     gameWidget = GestureDetector(
       child: gameWidget,
+      // Absorb events
       behavior: HitTestBehavior.opaque,
       // Taps/clicks
-      onTapUp: (d) => widget.gameState.onTapUp(d),
-      onLongPressStart: (d) => widget.gameState.onLongPressStart(d),
-      onSecondaryTapUp: (d) => widget.gameState.onSecondaryTapUp(d),
+      onTapDown: (d) => widget.gameInput.onTapDown(d),
+      onTapUp: (d) => widget.gameInput.onTapUp(d),
+      onLongPressStart: (d) => widget.gameInput.onLongPressStart(d),
+      onSecondaryTapUp: (d) => widget.gameInput.onSecondaryTapUp(d),
       onSecondaryLongPressStart: (d) =>
-          widget.gameState.onSecondaryLongPressStart(d),
+          widget.gameInput.onSecondaryLongPressStart(d),
       // Dragging
       dragStartBehavior: DragStartBehavior.start,
-      onHorizontalDragStart: (d) => widget.gameState.dragStart(d),
-      onHorizontalDragUpdate: (d) => widget.gameState.onDragUpdate(d),
-      onVerticalDragStart: (d) => widget.gameState.dragStart(d),
-      onVerticalDragUpdate: (d) => widget.gameState.onDragUpdate(d),
+      onPanStart: (d) => widget.gameInput.onDragStart(d),
+      onPanUpdate: (d) => widget.gameInput.onDragUpdate(d),
+      onPanEnd: (d) => widget.gameInput.onDragEnd(d),
     );
 
     gameWidget = MouseRegion(
       child: Listener(
         child: gameWidget,
-        onPointerSignal: (e) => widget.gameState.onPointerSignal(e),
-        onPointerMove: (e) => widget.gameState.onPointerMove(e),
-        onPointerHover: (e) => widget.gameState.onPointerHover(e),
+        onPointerSignal: (e) => widget.gameInput.onPointerSignal(e),
+        onPointerMove: (e) => widget.gameInput.onPointerMove(e),
+        onPointerHover: (e) => widget.gameInput.onPointerHover(e),
       )
     );
 
     gameWidget = Focus(
       child: gameWidget,
       autofocus: true,
-      onKey: (n, e) => widget.gameState.onKey(e),
+      onKey: (n, e) => widget.gameInput.onKey(e),
     );
 
     return Scaffold(
@@ -93,14 +94,14 @@ class _GameViewState extends State<GameView>
 }
 
 class _NetwalkWidget extends LeafRenderObjectWidget {
-  final NetwalkState gameState;
+  final NetwalkInput gameInput;
 
-  const _NetwalkWidget(this.gameState);
+  const _NetwalkWidget(this.gameInput);
 
   @override
   RenderBox createRenderObject(BuildContext context) {
     return RenderConstrainedBox(
-      child: NetwalkRenderBox(),
+      child: NetwalkRenderBox(this.gameInput),
       additionalConstraints: const BoxConstraints.expand(),
     );
   }

@@ -44,6 +44,7 @@ enum NetwalkPiece {
   arcQuadPiece
 }
 
+// Utility for building game board graphics and rendering out texture atlases.
 class NetwalkGraphics {
   final double pipeWidth, cutWidth, lockWidth, atlasSize;
 
@@ -56,7 +57,7 @@ class NetwalkGraphics {
     _computePaths();
   }
 
-  void PaintAtlas(Canvas canvas) {
+  void paintAtlas(Canvas canvas) {
     final paint = Paint();
     paint.color = Colors.white;
     canvas.save();

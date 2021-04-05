@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:netwalk/netwalk_input.dart';
 
 import 'netwalk_graphics.dart';
 
@@ -8,9 +9,10 @@ import 'netwalk_graphics.dart';
 class NetwalkRenderBox extends RenderBox {
   late Ticker _ticker;
   Duration _previousTime = Duration.zero;
-  NetwalkGraphics gfx = NetwalkGraphics(10, 16, 22, 100);
+  NetwalkGraphics _gfx = NetwalkGraphics(10, 16, 22, 100);
+  late NetwalkInput _input;
 
-  NetwalkRenderBox() {
+  NetwalkRenderBox(this._input) {
     _ticker = Ticker(_tick);
   }
 
@@ -21,6 +23,8 @@ class NetwalkRenderBox extends RenderBox {
             .inMilliseconds /
         Duration.millisecondsPerSecond;
     _previousTime = currentTime;
+
+    _input.tick(dt);
 
     markNeedsPaint();
   }
@@ -47,7 +51,8 @@ class NetwalkRenderBox extends RenderBox {
   void paint(PaintingContext context, Offset offset) {
     context.canvas.save();
     context.canvas.translate(offset.dx, offset.dy);
-    gfx.PaintAtlas(context.canvas);
+    context.canvas.transform(_input.transform.storage);
+    _gfx.paintAtlas(context.canvas);
     context.canvas.restore();
   }
 }
