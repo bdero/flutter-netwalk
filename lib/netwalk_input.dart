@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/src/services/raw_keyboard.dart';
 
 // Self contained parabola parameterized by velocity and friction values.
-class FlickAnimation {
+class ParabolicEase {
   double _velocity;
   double _friction;
   double _time = 0;
@@ -17,7 +17,7 @@ class FlickAnimation {
 
   double get value => _value;
 
-  FlickAnimation(this._velocity, this._friction) {
+  ParabolicEase(this._velocity, this._friction) {
     _maxTime = _velocity / _friction / 2;
   }
 
@@ -38,7 +38,7 @@ Vector3 vector3FromOffset(Offset offset) {
 
 class NetwalkInput {
   Offset _lastKnownMousePosition = Offset.zero;
-  FlickAnimation? flick;
+  ParabolicEase? flick;
 
   Vector3 _boardOrigin = Vector3.zero();
   Vector3 _tickBoardOrigin = Vector3.zero();
@@ -146,7 +146,8 @@ class NetwalkInput {
   _releaseDrag() {
     print("drag end");
     double flickVelocity = _originVelocity.length;
-    flick = FlickAnimation(_originVelocity.length, flickVelocity/2 + 5);
+    // Decelerate slower for faster flicks.
+    flick = ParabolicEase(flickVelocity, 100000 / flickVelocity + 300);
   }
 
   _lockPiece(Offset position) {
