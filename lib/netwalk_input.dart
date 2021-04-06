@@ -37,16 +37,18 @@ Vector3 vector3FromOffset(Offset offset) {
 }
 
 class NetwalkInput {
+  static const double MIN_SCALE = 0.2;
+  static const double MAX_SCALE = 5;
+
   Offset _lastKnownMousePosition = Offset.zero;
   ParabolicEase? flick;
 
-  Vector3 _boardOrigin = Vector3.zero();
   Vector3 _tickBoardOrigin = Vector3.zero();
   Vector3 _originVelocity = Vector3.zero();
   double _boardScale = 1;
+  Matrix4 _transform = Matrix4.identity();
 
-  Matrix4 get transform => Matrix4.compose(
-      _boardOrigin, Quaternion.identity(), Vector3.all(_boardScale));
+  Matrix4 get transform => _transform;
 
   // Interpret raw inputs as internal actions.
 
@@ -69,17 +71,15 @@ class NetwalkInput {
 
   onPointerSignal(PointerSignalEvent e) {
     if (e is PointerScrollEvent) {
-      print("scroll: " + e.scrollDelta.toString());
+      _scroll(e.localPosition, e.scrollDelta.dy);
     }
   }
 
   onPointerMove(PointerMoveEvent e) {
-    print("pointer move: " + e.localPosition.toString());
     _lastKnownMousePosition = e.localPosition;
   }
 
   onPointerHover(PointerHoverEvent e) {
-    print("pointer hover: " + e.localPosition.toString());
     _lastKnownMousePosition = e.localPosition;
   }
 
@@ -105,15 +105,17 @@ class NetwalkInput {
 
   void tick(double dt) {
     // Compute the velocity of the board origin.
-    if (dt > 0)
+    if (dt > 0) {
+      Vector3 boardOrigin = _transform.getTranslation();
       _originVelocity =
-          (_boardOrigin - _tickBoardOrigin) / dt * 0.5 + _originVelocity * 0.5;
-    _tickBoardOrigin = _boardOrigin;
+          (boardOrigin - _tickBoardOrigin) / dt * 0.5 + _originVelocity * 0.5;
+      _tickBoardOrigin = boardOrigin;
+    }
 
     // Apply flick offset if occurring.
     if (flick != null) {
       double dv = flick!.tick(dt);
-      _translateBoard(_originVelocity.normalized() * dv);
+      _applyTranslation(_originVelocity.normalized() * dv);
       if (flick!.complete()) {
         flick = null;
       }
@@ -134,27 +136,43 @@ class NetwalkInput {
   }
 
   _startDrag(Offset position) {
-    print("drag start: " + position.toString());
     flick = null;
   }
 
   _continueDrag(Offset delta) {
-    print("drag continue: " + delta.toString());
-    _translateBoard(vector3FromOffset(delta));
+    _applyTranslation(vector3FromOffset(delta));
   }
 
   _releaseDrag() {
-    print("drag end");
     double flickVelocity = _originVelocity.length;
     // Decelerate slower for faster flicks.
     flick = ParabolicEase(flickVelocity, 100000 / flickVelocity + 300);
+  }
+
+  _scroll(Offset position, double amount) {
+    _applyScale(vector3FromOffset(position), pow(e, -amount / 2000).toDouble());
   }
 
   _lockPiece(Offset position) {
     print("lock piece at " + position.toString());
   }
 
-  _translateBoard(Vector3 translation) {
-    _boardOrigin += translation;
+  _applyTranslation(Vector3 translation) {
+    translation = translation / _transform.getMaxScaleOnAxis();
+    _transform.translate(translation.x, translation.y, translation.z);
+  }
+
+  _applyScale(Vector3 screenPosition, double scale) {
+    Vector3 boardPosition =
+        Matrix4.inverted(_transform).transform3(screenPosition);
+
+    double currentScale = _transform.getMaxScaleOnAxis();
+    double scaleDestination =
+        max(MIN_SCALE, min(MAX_SCALE, _transform.getMaxScaleOnAxis() * scale));
+    double deltaScale = scaleDestination / currentScale;
+
+    _transform.translate(boardPosition.x, boardPosition.y, boardPosition.z);
+    _transform.scale(deltaScale);
+    _transform.translate(-boardPosition.x, -boardPosition.y, -boardPosition.z);
   }
 }
