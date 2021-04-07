@@ -23,7 +23,7 @@ class Root extends StatelessWidget {
 }
 
 class GameView extends StatefulWidget {
-  NetwalkInput gameInput = NetwalkInput();
+  NetwalkInput gameInput = NetwalkInput(10, 10);
 
   GameView({Key? key, this.title}) : super(key: key);
   final String? title;

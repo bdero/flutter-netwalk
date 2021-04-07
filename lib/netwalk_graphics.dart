@@ -47,13 +47,14 @@ enum NetwalkPiece {
 // Utility for building game board graphics and rendering out texture atlases.
 class NetwalkGraphics {
   final double pipeWidth, cutWidth, lockWidth, atlasSize;
+  final int xSize, ySize;
 
   // Primitive paths used to build up everything else.
   late PathSet _straightSeg, _arcSeg, _arcCutSeg;
   Map<NetwalkPiece, PathSet?> _pieces = Map();
 
-  NetwalkGraphics(
-      this.pipeWidth, this.cutWidth, this.lockWidth, this.atlasSize) {
+  NetwalkGraphics(this.pipeWidth, this.cutWidth, this.lockWidth, this.atlasSize,
+      this.xSize, this.ySize) {
     _computePaths();
   }
 
@@ -68,7 +69,7 @@ class NetwalkGraphics {
     });
     canvas.restore();
     canvas.save();
-    canvas.translate(atlasSize / 2, atlasSize*1.5);
+    canvas.translate(atlasSize / 2, atlasSize * 1.5);
     NetwalkPiece.values.forEach((v) {
       canvas.drawPath(_pieces[v]!.lockPath, paint);
       canvas.translate(atlasSize, 0);

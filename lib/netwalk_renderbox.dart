@@ -9,7 +9,7 @@ import 'netwalk_graphics.dart';
 class NetwalkRenderBox extends RenderBox {
   late Ticker _ticker;
   Duration _previousTime = Duration.zero;
-  NetwalkGraphics _gfx = NetwalkGraphics(10, 16, 22, 100);
+  NetwalkGraphics _gfx = NetwalkGraphics(10, 16, 22, 100, 10, 10);
   late NetwalkInput _input;
 
   NetwalkRenderBox(this._input) {
@@ -45,13 +45,18 @@ class NetwalkRenderBox extends RenderBox {
   bool get sizedByParent => true;
 
   @override
-  Size computeDryLayout(BoxConstraints constraints) => constraints.biggest;
+  Size computeDryLayout(BoxConstraints constraints) {
+    _input.screenSize = constraints.biggest;
+    return constraints.biggest;
+  }
 
   @override
   void paint(PaintingContext context, Offset offset) {
     context.canvas.save();
     context.canvas.translate(offset.dx, offset.dy);
+    context.canvas.translate(size.width/2, size.height/2);
     context.canvas.transform(_input.transform.storage);
+    context.canvas.drawRect(Rect.fromLTWH(0, 0, 1000, 1000), Paint());
     _gfx.paintAtlas(context.canvas);
     context.canvas.restore();
   }

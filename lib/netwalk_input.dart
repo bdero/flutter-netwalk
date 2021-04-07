@@ -40,30 +40,47 @@ class NetwalkInput {
   static const double MIN_SCALE = 0.2;
   static const double MAX_SCALE = 5;
 
+  // Always assume a size of 100
+  static const double PIECE_SIZE = 100;
+
+  late final Vector3 _boardSize;
+
+  Offset _boardCenter = Offset.zero;
+
+  set screenSize(Size o) => _boardCenter = Offset(o.width / 2, o.height / 2);
+
   Offset _lastKnownMousePosition = Offset.zero;
-  ParabolicEase? flick;
+  ParabolicEase? _flick;
+  bool _boardWrappedThisFrame = false;
 
   Vector3 _tickBoardOrigin = Vector3.zero();
   Vector3 _originVelocity = Vector3.zero();
-  double _boardScale = 1;
-  Matrix4 _transform = Matrix4.identity();
+  late Matrix4 _transform;
 
   Matrix4 get transform => _transform;
+
+  NetwalkInput(int boardSizeX, int boardSizeY) {
+    _boardSize = Vector3(boardSizeX.toDouble() * PIECE_SIZE,
+        boardSizeY.toDouble() * PIECE_SIZE, 0);
+    _transform = Matrix4.translation(-_boardSize / 2);
+  }
 
   // Interpret raw inputs as internal actions.
 
   onTapDown(TapDownDetails d) => _startTap();
 
-  onTapUp(TapUpDetails d) => _rotatePiece(d.localPosition, true);
+  onTapUp(TapUpDetails d) => _rotatePiece(d.localPosition - _boardCenter, true);
 
-  onLongPressStart(LongPressStartDetails d) => _lockPiece(d.localPosition);
+  onLongPressStart(LongPressStartDetails d) =>
+      _lockPiece(d.localPosition - _boardCenter);
 
-  onSecondaryTapUp(TapUpDetails d) => _lockPiece(d.localPosition);
+  onSecondaryTapUp(TapUpDetails d) =>
+      _lockPiece(d.localPosition - _boardCenter);
 
   onSecondaryLongPressStart(LongPressStartDetails d) =>
-      _lockPiece(d.localPosition);
+      _lockPiece(d.localPosition - _boardCenter);
 
-  onDragStart(DragStartDetails d) => _startDrag(d.localPosition);
+  onDragStart(DragStartDetails d) => _startDrag(d.localPosition - _boardCenter);
 
   onDragUpdate(DragUpdateDetails d) => _continueDrag(d.delta);
 
@@ -71,16 +88,16 @@ class NetwalkInput {
 
   onPointerSignal(PointerSignalEvent e) {
     if (e is PointerScrollEvent) {
-      _scroll(e.localPosition, e.scrollDelta.dy);
+      _scroll(e.localPosition - _boardCenter, e.scrollDelta.dy);
     }
   }
 
   onPointerMove(PointerMoveEvent e) {
-    _lastKnownMousePosition = e.localPosition;
+    _lastKnownMousePosition = e.localPosition - _boardCenter;
   }
 
   onPointerHover(PointerHoverEvent e) {
-    _lastKnownMousePosition = e.localPosition;
+    _lastKnownMousePosition = e.localPosition - _boardCenter;
   }
 
   onKey(RawKeyEvent e) {
@@ -104,20 +121,21 @@ class NetwalkInput {
   }
 
   void tick(double dt) {
+    Vector3 boardOrigin = _transform.getTranslation();
     // Compute the velocity of the board origin.
-    if (dt > 0) {
-      Vector3 boardOrigin = _transform.getTranslation();
+    if (dt > 0 && !_boardWrappedThisFrame) {
       _originVelocity =
           (boardOrigin - _tickBoardOrigin) / dt * 0.5 + _originVelocity * 0.5;
-      _tickBoardOrigin = boardOrigin;
     }
+    _tickBoardOrigin = boardOrigin;
+    _boardWrappedThisFrame = false;
 
     // Apply flick offset if occurring.
-    if (flick != null) {
-      double dv = flick!.tick(dt);
+    if (_flick != null) {
+      double dv = _flick!.tick(dt);
       _applyTranslation(_originVelocity.normalized() * dv);
-      if (flick!.complete()) {
-        flick = null;
+      if (_flick!.complete()) {
+        _flick = null;
       }
     }
   }
@@ -132,11 +150,11 @@ class NetwalkInput {
   }
 
   _startTap() {
-    flick = null;
+    _flick = null;
   }
 
   _startDrag(Offset position) {
-    flick = null;
+    _flick = null;
   }
 
   _continueDrag(Offset delta) {
@@ -146,7 +164,7 @@ class NetwalkInput {
   _releaseDrag() {
     double flickVelocity = _originVelocity.length;
     // Decelerate slower for faster flicks.
-    flick = ParabolicEase(flickVelocity, 100000 / flickVelocity + 300);
+    _flick = ParabolicEase(flickVelocity, 10000 / flickVelocity + 3000);
   }
 
   _scroll(Offset position, double amount) {
@@ -160,6 +178,8 @@ class NetwalkInput {
   _applyTranslation(Vector3 translation) {
     translation = translation / _transform.getMaxScaleOnAxis();
     _transform.translate(translation.x, translation.y, translation.z);
+
+    _boundTranslation();
   }
 
   _applyScale(Vector3 screenPosition, double scale) {
@@ -174,5 +194,29 @@ class NetwalkInput {
     _transform.translate(boardPosition.x, boardPosition.y, boardPosition.z);
     _transform.scale(deltaScale);
     _transform.translate(-boardPosition.x, -boardPosition.y, -boardPosition.z);
+
+    _boundTranslation();
+  }
+
+  _boundTranslation() {
+    Vector3 position = _transform.getTranslation();
+    _transform.setTranslation(Vector3.zero());
+    Matrix4 toBoardSpace = Matrix4.inverted(_transform);
+    Vector3 boardPosition = toBoardSpace.transform3(position) + _boardSize;
+
+    // Evil hack alert: If the board wraps, flip on a special flag that prevents
+    // the velocity from being recalculated next frame. ¯\_(ツ)_/¯
+    if (boardPosition.x < 0 ||
+        boardPosition.x >= _boardSize.x ||
+        boardPosition.y < 0 ||
+        boardPosition.y >= _boardSize.y) {
+      _boardWrappedThisFrame = true;
+    }
+
+    // Bask in the glory of Dart's actual Euclidean modulo!
+    boardPosition.x = boardPosition.x % _boardSize.x;
+    boardPosition.y = boardPosition.y % _boardSize.y;
+    _transform
+        .setTranslation(_transform.transform3(boardPosition - _boardSize));
   }
 }
