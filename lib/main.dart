@@ -23,8 +23,6 @@ class Root extends StatelessWidget {
 }
 
 class GameView extends StatefulWidget {
-  NetwalkInput gameInput = NetwalkInput(10, 10);
-
   GameView({Key? key, this.title}) : super(key: key);
   final String? title;
 
@@ -36,41 +34,6 @@ class _GameViewState extends State<GameView>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
-    Widget gameWidget = _NetwalkWidget(widget.gameInput);
-
-    gameWidget = GestureDetector(
-      child: gameWidget,
-      // Absorb events
-      behavior: HitTestBehavior.opaque,
-      // Taps/clicks
-      onTapDown: (d) => widget.gameInput.onTapDown(d),
-      onTapUp: (d) => widget.gameInput.onTapUp(d),
-      onLongPressStart: (d) => widget.gameInput.onLongPressStart(d),
-      onSecondaryTapUp: (d) => widget.gameInput.onSecondaryTapUp(d),
-      onSecondaryLongPressStart: (d) =>
-          widget.gameInput.onSecondaryLongPressStart(d),
-      // Dragging
-      dragStartBehavior: DragStartBehavior.start,
-      onPanStart: (d) => widget.gameInput.onDragStart(d),
-      onPanUpdate: (d) => widget.gameInput.onDragUpdate(d),
-      onPanEnd: (d) => widget.gameInput.onDragEnd(d),
-    );
-
-    gameWidget = MouseRegion(
-      child: Listener(
-        child: gameWidget,
-        onPointerSignal: (e) => widget.gameInput.onPointerSignal(e),
-        onPointerMove: (e) => widget.gameInput.onPointerMove(e),
-        onPointerHover: (e) => widget.gameInput.onPointerHover(e),
-      )
-    );
-
-    gameWidget = Focus(
-      child: gameWidget,
-      autofocus: true,
-      onKey: (n, e) => widget.gameInput.onKey(e),
-    );
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title!),
@@ -83,7 +46,7 @@ class _GameViewState extends State<GameView>
                 Container(
                   color: Colors.lightBlueAccent,
                 ),
-                gameWidget,
+                NetwalkWidget.buildWithInput(10, 10),
               ],
             );
           },
@@ -93,15 +56,56 @@ class _GameViewState extends State<GameView>
   }
 }
 
-class _NetwalkWidget extends LeafRenderObjectWidget {
-  final NetwalkInput gameInput;
+class NetwalkWidget extends LeafRenderObjectWidget {
+  late NetwalkInput input;
 
-  const _NetwalkWidget(this.gameInput);
+  NetwalkWidget(int gameWidth, int gameHeight, {Key? key}) : super(key: key) {
+    input = NetwalkInput(gameWidth, gameHeight);
+  }
+
+  static Widget buildWithInput(int gameWidth, int gameHeight) {
+    NetwalkWidget netwalk = NetwalkWidget(gameWidth, gameHeight);
+    Widget widget = netwalk;
+
+    widget = GestureDetector(
+      child: widget,
+      // Absorb events
+      behavior: HitTestBehavior.opaque,
+      // Taps/clicks
+      onTapDown: (d) => netwalk.input.onTapDown(d),
+      onTapUp: (d) => netwalk.input.onTapUp(d),
+      onLongPressStart: (d) => netwalk.input.onLongPressStart(d),
+      onSecondaryTapUp: (d) => netwalk.input.onSecondaryTapUp(d),
+      onSecondaryLongPressStart: (d) =>
+          netwalk.input.onSecondaryLongPressStart(d),
+      // Dragging
+      dragStartBehavior: DragStartBehavior.start,
+      onPanStart: (d) => netwalk.input.onDragStart(d),
+      onPanUpdate: (d) => netwalk.input.onDragUpdate(d),
+      onPanEnd: (d) => netwalk.input.onDragEnd(d),
+    );
+
+    widget = MouseRegion(
+        child: Listener(
+      child: widget,
+      onPointerSignal: (e) => netwalk.input.onPointerSignal(e),
+      onPointerMove: (e) => netwalk.input.onPointerMove(e),
+      onPointerHover: (e) => netwalk.input.onPointerHover(e),
+    ));
+
+    widget = Focus(
+      child: widget,
+      autofocus: true,
+      onKey: (n, e) => netwalk.input.onKey(e),
+    );
+
+    return widget;
+  }
 
   @override
   RenderBox createRenderObject(BuildContext context) {
     return RenderConstrainedBox(
-      child: NetwalkRenderBox(this.gameInput),
+      child: NetwalkRenderBox(this.input),
       additionalConstraints: const BoxConstraints.expand(),
     );
   }
