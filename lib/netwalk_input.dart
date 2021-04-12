@@ -52,6 +52,7 @@ class NetwalkInput {
   Matrix4 get transform => _transform;
 
   late final Vector3 _boardSize;
+  get boardSize => offsetFromVector3(_boardSize*_transform.getMaxScaleOnAxis());
   Offset _boardCenter = Offset.zero;
 
   set screenSize(Size o) => _boardCenter = Offset(o.width / 2, o.height / 2);

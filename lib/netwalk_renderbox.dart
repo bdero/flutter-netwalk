@@ -52,12 +52,26 @@ class NetwalkRenderBox extends RenderBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    var transform = _input.transform.storage;
+    Offset boardSize = _input.boardSize;
+    int offsetX = (size.width / boardSize.dx).ceil();
+    int offsetY = (size.height / boardSize.dy).ceil();
+
     context.canvas.save();
-    context.canvas.translate(offset.dx, offset.dy);
-    context.canvas.translate(size.width/2, size.height/2);
-    context.canvas.transform(_input.transform.storage);
-    context.canvas.drawRect(Rect.fromLTWH(0, 0, 1000, 1000), Paint());
-    _gfx.paintAtlas(context.canvas);
+    context.canvas
+        .translate(offset.dx + size.width / 2, offset.dy + size.height / 2);
+
+    var paint = Paint();
+    paint.isAntiAlias = false;
+    for (int x = -offsetX; x <= offsetX; x++) {
+      for (int y = -offsetY; y <= offsetY; y++) {
+        context.canvas.save();
+        context.canvas.translate(x * boardSize.dx, y * boardSize.dy);
+        context.canvas.transform(transform);
+        _gfx.paintAtlas(context.canvas);
+        context.canvas.restore();
+      }
+    }
     context.canvas.restore();
   }
 }
