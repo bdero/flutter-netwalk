@@ -36,6 +36,10 @@ Vector3 vector3FromOffset(Offset offset) {
   return Vector3(offset.dx, offset.dy, 0);
 }
 
+Offset offsetFromVector3(Vector3 vector) {
+  return Offset(vector.x, vector.y);
+}
+
 class NetwalkInput {
   static const double MIN_SCALE = 0.2;
   static const double MAX_SCALE = 5;
@@ -43,21 +47,26 @@ class NetwalkInput {
   // Always assume a size of 100
   static const double PIECE_SIZE = 100;
 
-  late final Vector3 _boardSize;
+  late Matrix4 _transform;
 
+  Matrix4 get transform => _transform;
+
+  late final Vector3 _boardSize;
   Offset _boardCenter = Offset.zero;
 
   set screenSize(Size o) => _boardCenter = Offset(o.width / 2, o.height / 2);
 
+  // Used in conjunction with key inputs.
   Offset _lastKnownMousePosition = Offset.zero;
   ParabolicEase? _flick;
-  bool _boardWrappedThisFrame = false;
 
+  // Snapshot of the board transform origin for calculating velocity each tick.
   Vector3 _tickBoardOrigin = Vector3.zero();
   Vector3 _originVelocity = Vector3.zero();
-  late Matrix4 _transform;
 
-  Matrix4 get transform => _transform;
+  // Whenever the board wraps around, this value is flipped on to prevent
+  // the velocity from being recalculated.
+  bool _boardWrappedThisFrame = false;
 
   NetwalkInput(int boardSizeX, int boardSizeY) {
     _boardSize = Vector3(boardSizeX.toDouble() * PIECE_SIZE,
@@ -65,7 +74,7 @@ class NetwalkInput {
     _transform = Matrix4.translation(-_boardSize / 2);
   }
 
-  // Interpret raw inputs as internal actions.
+  // Interpret raw inputs as game actions.
 
   onTapDown(TapDownDetails d) => _startTap();
 
@@ -143,10 +152,18 @@ class NetwalkInput {
   // Internal actions, typically called by input.
 
   _rotatePiece(Offset position, bool clockwise) {
+    var pieceCoordinates =
+        _toBoardCoordinate(_toBoardSpace(vector3FromOffset(position)));
     print("rotate piece " +
         (clockwise ? "" : "counter-") +
         "clockwise at " +
-        position.toString());
+        pieceCoordinates.toString());
+  }
+
+  _lockPiece(Offset position) {
+    var pieceCoordinates =
+        _toBoardCoordinate(_toBoardSpace(vector3FromOffset(position)));
+    print("lock piece at " + pieceCoordinates.toString());
   }
 
   _startTap() {
@@ -169,10 +186,6 @@ class NetwalkInput {
 
   _scroll(Offset position, double amount) {
     _applyScale(vector3FromOffset(position), pow(e, -amount / 2000).toDouble());
-  }
-
-  _lockPiece(Offset position) {
-    print("lock piece at " + position.toString());
   }
 
   _applyTranslation(Vector3 translation) {
@@ -219,4 +232,11 @@ class NetwalkInput {
     _transform
         .setTranslation(_transform.transform3(boardPosition - _boardSize));
   }
+
+  Vector3 _toBoardSpace(Vector3 widgetPosition) =>
+      Matrix4.inverted(_transform).transform3(widgetPosition);
+
+  Point<int> _toBoardCoordinate(Vector3 boardSpacePosition) => Point(
+      ((boardSpacePosition.x % _boardSize.x) / PIECE_SIZE).floor(),
+      ((boardSpacePosition.y % _boardSize.y) / PIECE_SIZE).floor());
 }

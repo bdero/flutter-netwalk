@@ -17,21 +17,23 @@ class Root extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: GameView(title: 'Large'),
+      home: GameView(title: 'Small'),
     );
   }
 }
 
 class GameView extends StatefulWidget {
-  GameView({Key? key, this.title}) : super(key: key);
   final String? title;
+
+  GameView({Key? key, this.title}) : super(key: key);
 
   @override
   _GameViewState createState() => _GameViewState();
 }
 
-class _GameViewState extends State<GameView>
-    with SingleTickerProviderStateMixin {
+class _GameViewState extends State<GameView> {
+  final inputState = NetwalkInput(10, 10);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +48,7 @@ class _GameViewState extends State<GameView>
                 Container(
                   color: Colors.lightBlueAccent,
                 ),
-                NetwalkWidget.buildWithInput(10, 10),
+                NetwalkWidget.buildWithInput(inputState),
               ],
             );
           },
@@ -57,14 +59,12 @@ class _GameViewState extends State<GameView>
 }
 
 class NetwalkWidget extends LeafRenderObjectWidget {
-  late NetwalkInput input;
+  final NetwalkInput input;
 
-  NetwalkWidget(int gameWidth, int gameHeight, {Key? key}) : super(key: key) {
-    input = NetwalkInput(gameWidth, gameHeight);
-  }
+  NetwalkWidget(this.input, {Key? key}) : super(key: key);
 
-  static Widget buildWithInput(int gameWidth, int gameHeight) {
-    NetwalkWidget netwalk = NetwalkWidget(gameWidth, gameHeight);
+  static Widget buildWithInput(NetwalkInput input) {
+    NetwalkWidget netwalk = NetwalkWidget(input);
     Widget widget = netwalk;
 
     widget = GestureDetector(
