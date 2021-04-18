@@ -4,7 +4,8 @@ import 'package:vector_math/vector_math_64.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/src/services/raw_keyboard.dart';
+
+import 'extensions.dart';
 
 // Self contained parabola parameterized by velocity and friction values.
 class ParabolicEase {
@@ -32,14 +33,6 @@ class ParabolicEase {
   bool complete() => _time >= _maxTime;
 }
 
-Vector3 vector3FromOffset(Offset offset) {
-  return Vector3(offset.dx, offset.dy, 0);
-}
-
-Offset offsetFromVector3(Vector3 vector) {
-  return Offset(vector.x, vector.y);
-}
-
 class NetwalkInput {
   static const double MIN_SCALE = 0.2;
   static const double MAX_SCALE = 5;
@@ -52,7 +45,7 @@ class NetwalkInput {
   Matrix4 get transform => _transform;
 
   late final Vector3 _boardSize;
-  get boardSize => offsetFromVector3(_boardSize*_transform.getMaxScaleOnAxis());
+  get boardSize => (_boardSize*_transform.getMaxScaleOnAxis()).toOffset();
   Offset _boardCenter = Offset.zero;
 
   set screenSize(Size o) => _boardCenter = Offset(o.width / 2, o.height / 2);
@@ -154,7 +147,7 @@ class NetwalkInput {
 
   _rotatePiece(Offset position, bool clockwise) {
     var pieceCoordinates =
-        _toBoardCoordinate(_toBoardSpace(vector3FromOffset(position)));
+        _toBoardCoordinate(_toBoardSpace(position.toVector3()));
     print("rotate piece " +
         (clockwise ? "" : "counter-") +
         "clockwise at " +
@@ -163,7 +156,7 @@ class NetwalkInput {
 
   _lockPiece(Offset position) {
     var pieceCoordinates =
-        _toBoardCoordinate(_toBoardSpace(vector3FromOffset(position)));
+        _toBoardCoordinate(_toBoardSpace(position.toVector3()));
     print("lock piece at " + pieceCoordinates.toString());
   }
 
@@ -176,7 +169,7 @@ class NetwalkInput {
   }
 
   _continueDrag(Offset delta) {
-    _applyTranslation(vector3FromOffset(delta));
+    _applyTranslation(delta.toVector3());
   }
 
   _releaseDrag() {
@@ -186,7 +179,7 @@ class NetwalkInput {
   }
 
   _scroll(Offset position, double amount) {
-    _applyScale(vector3FromOffset(position), pow(e, -amount / 2000).toDouble());
+    _applyScale(position.toVector3(), pow(e, -amount / 2000).toDouble());
   }
 
   _applyTranslation(Vector3 translation) {
