@@ -45,7 +45,7 @@ class NetwalkInput {
   Matrix4 get transform => _transform;
 
   late final Vector3 _boardSize;
-  get boardSize => (_boardSize*_transform.getMaxScaleOnAxis()).toOffset();
+  get boardSize => (_boardSize * _transform.getMaxScaleOnAxis()).toOffset();
   Offset _boardCenter = Offset.zero;
 
   set screenSize(Size o) => _boardCenter = Offset(o.width / 2, o.height / 2);
@@ -108,19 +108,19 @@ class NetwalkInput {
       if (e.logicalKey == LogicalKeyboardKey.keyA ||
           e.logicalKey == LogicalKeyboardKey.arrowLeft) {
         _rotatePiece(_lastKnownMousePosition, false);
-        return true;
+        return KeyEventResult.handled;
       }
       if (e.logicalKey == LogicalKeyboardKey.keyD ||
           e.logicalKey == LogicalKeyboardKey.arrowRight) {
         _rotatePiece(_lastKnownMousePosition, true);
-        return true;
+        return KeyEventResult.handled;
       }
       if (e.logicalKey == LogicalKeyboardKey.space) {
         _lockPiece(_lastKnownMousePosition);
-        return true;
+        return KeyEventResult.handled;
       }
     }
-    return false;
+    return KeyEventResult.ignored;
   }
 
   void tick(double dt) {
