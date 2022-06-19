@@ -34,23 +34,18 @@ class _GameViewState extends State<GameView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Container(
-        child: LayoutBuilder(
-          builder: (_, BoxConstraints constraints) {
-            return Stack(
-              children: [
-                Container(
-                  color: Colors.lightBlueAccent,
-                ),
-                controller.buildWidget(),
-              ],
-            );
-          },
-        ),
+    return Container(
+      child: LayoutBuilder(
+        builder: (_, BoxConstraints constraints) {
+          return Stack(
+            children: [
+              Container(
+                color: Colors.lightBlueAccent,
+              ),
+              controller.buildWidget(),
+            ],
+          );
+        },
       ),
     );
   }
