@@ -62,6 +62,11 @@ class NetwalkInput {
   // the velocity from being recalculated.
   bool _boardWrappedThisFrame = false;
 
+  // Smooth zoom state: accumulates the pending scale ratio to apply.
+  // _zoomCenterBoard is in board space so it stays fixed as the board moves.
+  double _pendingScaleRatio = 1.0;
+  Vector3 _zoomCenterBoard = Vector3.zero();
+
   NetwalkInput(int boardSizeX, int boardSizeY) {
     _boardSize = Vector3(boardSizeX.toDouble() * PIECE_SIZE,
         boardSizeY.toDouble() * PIECE_SIZE, 0);
@@ -143,6 +148,14 @@ class NetwalkInput {
         _flick = null;
       }
     }
+
+    // Apply smooth zoom.
+    if ((_pendingScaleRatio - 1.0).abs() > 0.001) {
+      double smoothing = 1.0 - pow(0.00001, dt).toDouble();
+      double ratioThisFrame = 1.0 + (_pendingScaleRatio - 1.0) * smoothing;
+      _pendingScaleRatio /= ratioThisFrame;
+      _applyScaleAtBoardPosition(_zoomCenterBoard, ratioThisFrame);
+    }
   }
 
   // Internal actions, typically called by input.
@@ -181,7 +194,8 @@ class NetwalkInput {
   }
 
   _scroll(Offset position, double amount) {
-    _applyScale(position.toVector3(), pow(e, -amount / 2000).toDouble());
+    _zoomCenterBoard = _toBoardSpace(position.toVector3());
+    _pendingScaleRatio *= pow(e, -amount / 2000).toDouble();
   }
 
   _applyTranslation(Vector3 translation) {
@@ -191,10 +205,7 @@ class NetwalkInput {
     _boundTranslation();
   }
 
-  _applyScale(Vector3 screenPosition, double scale) {
-    Vector3 boardPosition =
-        Matrix4.inverted(_transform).transform3(screenPosition);
-
+  _applyScaleAtBoardPosition(Vector3 boardPosition, double scale) {
     double currentScale = _transform.getMaxScaleOnAxis();
     double scaleDestination =
         max(MIN_SCALE, min(MAX_SCALE, _transform.getMaxScaleOnAxis() * scale));
@@ -226,10 +237,17 @@ class NetwalkInput {
     }
 
     // Bask in the glory of Dart's actual Euclidean modulo!
-    boardPosition.x = boardPosition.x % _boardSize.x;
-    boardPosition.y = boardPosition.y % _boardSize.y;
+    Vector3 wrappedPosition = Vector3(
+        boardPosition.x % _boardSize.x,
+        boardPosition.y % _boardSize.y,
+        0);
+
+    // Adjust zoom center by the wrap offset so it stays at the same screen position.
+    Vector3 wrapOffset = wrappedPosition - boardPosition;
+    _zoomCenterBoard -= wrapOffset;
+
     _transform
-        .setTranslation(_transform.transform3(boardPosition - _boardSize));
+        .setTranslation(_transform.transform3(wrappedPosition - _boardSize));
   }
 
   Vector3 _toBoardSpace(Vector3 widgetPosition) =>
