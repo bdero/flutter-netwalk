@@ -2,15 +2,14 @@
 
 Netwalk, in Flutter.
 
-## Getting Started
+## Building FlatBuffers
 
-This project is a starting point for a Flutter application.
+The board state is serialized using FlatBuffers. To regenerate the Dart code after modifying `lib/netwalk_board.fbs`:
 
-A few resources to get you started if this is your first Flutter project:
+1. Install `flatc` (the FlatBuffers compiler)
+2. Run:
+   ```bash
+   ./build_flatbuffers.sh
+   ```
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Generated files are output to `lib/generated/`.
