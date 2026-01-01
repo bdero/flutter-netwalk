@@ -1,14 +1,12 @@
 namespace netwalk.fb;
 
 enum NodeType: byte {
-  Empty = 0,
-  Wire = 1,
-  Source = 2,
-  Sink = 3,
+  Wire = 0,
+  Source = 1,
+  Sink = 2,
 }
 
 struct Node {
-  id: int;
   type: NodeType;
   locked: bool;
   rotation: int;  // Clockwise: 0=0deg, 1=90deg, 2=180deg, 3=270deg
@@ -17,9 +15,9 @@ struct Node {
 }
 
 table NetwalkBoard {
-  boardWidth: int;
-  boardHeight: int;
-  nodes: [Node];  // Left to right, top to bottom. Size is boardWidth * boardHeight.
+  board_width: int;
+  board_height: int;
+  nodes: [Node];  // Left to right, top to bottom. Size is board_width * board_height.
 }
 
 root_type NetwalkBoard;

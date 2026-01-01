@@ -9,20 +9,18 @@ import 'package:flat_buffers/flat_buffers.dart' as fb;
 
 
 enum NodeType {
-  Empty(0),
-  Wire(1),
-  Source(2),
-  Sink(3);
+  Wire(0),
+  Source(1),
+  Sink(2);
 
   final int value;
   const NodeType(this.value);
 
   factory NodeType.fromValue(int value) {
     switch (value) {
-      case 0: return NodeType.Empty;
-      case 1: return NodeType.Wire;
-      case 2: return NodeType.Source;
-      case 3: return NodeType.Sink;
+      case 0: return NodeType.Wire;
+      case 1: return NodeType.Source;
+      case 2: return NodeType.Sink;
       default: throw StateError('Invalid value $value for bit flag enum');
     }
   }
@@ -31,7 +29,7 @@ enum NodeType {
       value == null ? null : NodeType.fromValue(value);
 
   static const int minValue = 0;
-  static const int maxValue = 3;
+  static const int maxValue = 2;
   static const fb.Reader<NodeType> reader = _NodeTypeReader();
 }
 
@@ -54,16 +52,15 @@ class Node {
   final fb.BufferContext _bc;
   final int _bcOffset;
 
-  int get id => const fb.Int32Reader().read(_bc, _bcOffset + 0);
-  NodeType get type => NodeType.fromValue(const fb.Int8Reader().read(_bc, _bcOffset + 4));
-  bool get locked => const fb.BoolReader().read(_bc, _bcOffset + 5);
-  int get rotation => const fb.Int32Reader().read(_bc, _bcOffset + 8);
-  int get arms => const fb.Uint8Reader().read(_bc, _bcOffset + 12);
-  bool get connected => const fb.BoolReader().read(_bc, _bcOffset + 13);
+  NodeType get type => NodeType.fromValue(const fb.Int8Reader().read(_bc, _bcOffset + 0));
+  bool get locked => const fb.BoolReader().read(_bc, _bcOffset + 1);
+  int get rotation => const fb.Int32Reader().read(_bc, _bcOffset + 4);
+  int get arms => const fb.Uint8Reader().read(_bc, _bcOffset + 8);
+  bool get connected => const fb.BoolReader().read(_bc, _bcOffset + 9);
 
   @override
   String toString() {
-    return 'Node{id: ${id}, type: ${type}, locked: ${locked}, rotation: ${rotation}, arms: ${arms}, connected: ${connected}}';
+    return 'Node{type: ${type}, locked: ${locked}, rotation: ${rotation}, arms: ${arms}, connected: ${connected}}';
   }
 }
 
@@ -71,10 +68,10 @@ class _NodeReader extends fb.StructReader<Node> {
   const _NodeReader();
 
   @override
-  int get size => 16;
+  int get size => 12;
 
   @override
-  Node createObject(fb.BufferContext bc, int offset) =>
+  Node createObject(fb.BufferContext bc, int offset) => 
     Node._(bc, offset);
 }
 
@@ -83,7 +80,7 @@ class NodeBuilder {
 
   final fb.Builder fbBuilder;
 
-  int finish(int id, NodeType type, bool locked, int rotation, int arms, bool connected) {
+  int finish(NodeType type, bool locked, int rotation, int arms, bool connected) {
     fbBuilder.pad(2);
     fbBuilder.putBool(connected);
     fbBuilder.putUint8(arms);
@@ -91,14 +88,12 @@ class NodeBuilder {
     fbBuilder.pad(2);
     fbBuilder.putBool(locked);
     fbBuilder.putInt8(type.value);
-    fbBuilder.putInt32(id);
     return fbBuilder.offset;
   }
 
 }
 
 class NodeObjectBuilder extends fb.ObjectBuilder {
-  final int _id;
   final NodeType _type;
   final bool _locked;
   final int _rotation;
@@ -106,15 +101,13 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
   final bool _connected;
 
   NodeObjectBuilder({
-    required int id,
     required NodeType type,
     required bool locked,
     required int rotation,
     required int arms,
     required bool connected,
   })
-      : _id = id,
-        _type = type,
+      : _type = type,
         _locked = locked,
         _rotation = rotation,
         _arms = arms,
@@ -130,7 +123,6 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.pad(2);
     fbBuilder.putBool(_locked);
     fbBuilder.putInt8(_type.value);
-    fbBuilder.putInt32(_id);
     return fbBuilder.offset;
   }
 
@@ -168,7 +160,7 @@ class _NetwalkBoardReader extends fb.TableReader<NetwalkBoard> {
   const _NetwalkBoardReader();
 
   @override
-  NetwalkBoard createObject(fb.BufferContext bc, int offset) =>
+  NetwalkBoard createObject(fb.BufferContext bc, int offset) => 
     NetwalkBoard._(bc, offset);
 }
 
