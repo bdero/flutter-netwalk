@@ -103,8 +103,8 @@ class NetwalkInput {
     _lastKnownMousePosition = e.localPosition - _boardCenter;
   }
 
-  onKey(RawKeyEvent e) {
-    if (e is RawKeyDownEvent) {
+  onKeyEvent(KeyEvent e) {
+    if (e is KeyDownEvent) {
       if (e.logicalKey == LogicalKeyboardKey.keyA ||
           e.logicalKey == LogicalKeyboardKey.arrowLeft) {
         _rotatePiece(_lastKnownMousePosition, false);
@@ -186,7 +186,7 @@ class NetwalkInput {
 
   _applyTranslation(Vector3 translation) {
     translation = translation / _transform.getMaxScaleOnAxis();
-    _transform.translate(translation.x, translation.y, translation.z);
+    _transform.translateByVector3(translation);
 
     _boundTranslation();
   }
@@ -200,9 +200,9 @@ class NetwalkInput {
         max(MIN_SCALE, min(MAX_SCALE, _transform.getMaxScaleOnAxis() * scale));
     double deltaScale = scaleDestination / currentScale;
 
-    _transform.translate(boardPosition.x, boardPosition.y, boardPosition.z);
-    _transform.scale(deltaScale);
-    _transform.translate(-boardPosition.x, -boardPosition.y, -boardPosition.z);
+    _transform.translateByVector3(boardPosition);
+    _transform.scaleByDouble(deltaScale, deltaScale, deltaScale, 1.0);
+    _transform.translateByVector3(-boardPosition);
 
     _boundTranslation();
   }

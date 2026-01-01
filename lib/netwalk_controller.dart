@@ -51,7 +51,7 @@ class NetwalkController {
     widget = Focus(
       child: widget,
       autofocus: true,
-      onKey: (n, e) => _input.onKey(e),
+      onKeyEvent: (n, e) => _input.onKeyEvent(e),
     );
 
     return widget;
