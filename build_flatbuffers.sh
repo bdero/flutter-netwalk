@@ -8,6 +8,6 @@ OUTPUT_DIR="$SCRIPT_DIR/lib/generated"
 
 mkdir -p "$OUTPUT_DIR"
 
-flatc --dart -o "$OUTPUT_DIR" "$SCRIPT_DIR/lib/netwalk_board.fbs"
+flatc --dart --gen-object-api -o "$OUTPUT_DIR" "$SCRIPT_DIR/lib/netwalk_board.fbs"
 
 echo "FlatBuffers generated in $OUTPUT_DIR"

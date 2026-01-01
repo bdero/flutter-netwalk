@@ -62,6 +62,50 @@ class Node {
   String toString() {
     return 'Node{type: ${type}, locked: ${locked}, rotation: ${rotation}, arms: ${arms}, connected: ${connected}}';
   }
+
+  NodeT unpack() => NodeT(
+      type: type,
+      locked: locked,
+      rotation: rotation,
+      arms: arms,
+      connected: connected);
+
+  static int pack(fb.Builder fbBuilder, NodeT? object) {
+    if (object == null) return 0;
+    return object.pack(fbBuilder);
+  }
+}
+
+class NodeT implements fb.Packable {
+  NodeType type;
+  bool locked;
+  int rotation;
+  int arms;
+  bool connected;
+
+  NodeT({
+      required this.type,
+      required this.locked,
+      required this.rotation,
+      required this.arms,
+      required this.connected});
+
+  @override
+  int pack(fb.Builder fbBuilder) {
+    fbBuilder.pad(2);
+    fbBuilder.putBool(connected);
+    fbBuilder.putUint8(arms);
+    fbBuilder.putInt32(rotation);
+    fbBuilder.pad(2);
+    fbBuilder.putBool(locked);
+    fbBuilder.putInt8(type.value);
+    return fbBuilder.offset;
+  }
+
+  @override
+  String toString() {
+    return 'NodeT{type: ${type}, locked: ${locked}, rotation: ${rotation}, arms: ${arms}, connected: ${connected}}';
+  }
 }
 
 class _NodeReader extends fb.StructReader<Node> {
@@ -153,6 +197,46 @@ class NetwalkBoard {
   @override
   String toString() {
     return 'NetwalkBoard{boardWidth: ${boardWidth}, boardHeight: ${boardHeight}, nodes: ${nodes}}';
+  }
+
+  NetwalkBoardT unpack() => NetwalkBoardT(
+      boardWidth: boardWidth,
+      boardHeight: boardHeight,
+      nodes: nodes?.map((e) => e.unpack()).toList());
+
+  static int pack(fb.Builder fbBuilder, NetwalkBoardT? object) {
+    if (object == null) return 0;
+    return object.pack(fbBuilder);
+  }
+}
+
+class NetwalkBoardT implements fb.Packable {
+  int boardWidth;
+  int boardHeight;
+  List<NodeT>? nodes;
+
+  NetwalkBoardT({
+      this.boardWidth = 0,
+      this.boardHeight = 0,
+      this.nodes});
+
+  @override
+  int pack(fb.Builder fbBuilder) {
+    int? nodesOffset;
+    if (nodes != null) {
+      for (var e in nodes!.reversed) { e.pack(fbBuilder); }
+      nodesOffset = fbBuilder.endStructVector(nodes!.length);
+    }
+    fbBuilder.startTable(3);
+    fbBuilder.addInt32(0, boardWidth);
+    fbBuilder.addInt32(1, boardHeight);
+    fbBuilder.addOffset(2, nodesOffset);
+    return fbBuilder.endTable();
+  }
+
+  @override
+  String toString() {
+    return 'NetwalkBoardT{boardWidth: ${boardWidth}, boardHeight: ${boardHeight}, nodes: ${nodes}}';
   }
 }
 
