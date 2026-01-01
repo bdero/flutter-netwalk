@@ -136,7 +136,9 @@ class NetwalkInput {
     // Apply flick offset if occurring.
     if (_flick != null) {
       double dv = _flick!.tick(dt);
-      _applyTranslation(_originVelocity.normalized() * dv);
+      if (_originVelocity.length > 0) {
+        _applyTranslation(_originVelocity.normalized() * dv);
+      }
       if (_flick!.complete()) {
         _flick = null;
       }
