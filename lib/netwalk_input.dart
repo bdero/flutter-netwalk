@@ -205,6 +205,9 @@ class NetwalkInput {
     _transform.translateByVector3(-boardPosition);
 
     _boundTranslation();
+
+    // Reset the velocity snapshot so zooming doesn't contaminate flick velocity.
+    _tickBoardOrigin = _transform.getTranslation();
   }
 
   _boundTranslation() {
