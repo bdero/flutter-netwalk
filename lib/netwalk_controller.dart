@@ -2,7 +2,6 @@ import 'package:netwalk/netwalk_graphics.dart';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import 'netwalk_input.dart';
 import 'netwalk_widget.dart';
